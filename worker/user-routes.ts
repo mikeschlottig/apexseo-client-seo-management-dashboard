@@ -1,75 +1,106 @@
 import { Hono } from "hono";
 import type { Env } from './core-utils';
-import { UserEntity, ChatBoardEntity } from "./entities";
-import { ok, bad, notFound, isStr } from './core-utils';
-
+import { ClientEntity, LeadEntity } from "./entities";
+import { ok, bad, notFound } from './core-utils';
+import type { Client, Lead, PipelineStage, UploadedFile } from "@shared/types";
 export function userRoutes(app: Hono<{ Bindings: Env }>) {
-  app.get('/api/test', (c) => c.json({ success: true, data: { name: 'CF Workers Demo' }}));
-
-  // USERS
-  app.get('/api/users', async (c) => {
-    await UserEntity.ensureSeed(c.env);
+  // CLIENTS API
+  // List all clients with pagination
+  app.get('/api/clients', async (c) => {
+    await ClientEntity.ensureSeed(c.env);
     const cq = c.req.query('cursor');
     const lq = c.req.query('limit');
-    const page = await UserEntity.list(c.env, cq ?? null, lq ? Math.max(1, (Number(lq) | 0)) : undefined);
+    const limit = lq ? Math.max(1, Math.min(100, Number(lq) | 0)) : 20;
+    const page = await ClientEntity.list(c.env, cq ?? null, limit);
     return ok(c, page);
   });
-
-  app.post('/api/users', async (c) => {
-    const { name } = (await c.req.json()) as { name?: string };
-    if (!name?.trim()) return bad(c, 'name required');
-    return ok(c, await UserEntity.create(c.env, { id: crypto.randomUUID(), name: name.trim() }));
+  // Get a single client by ID
+  app.get('/api/clients/:id', async (c) => {
+    const id = c.req.param('id');
+    const clientEntity = new ClientEntity(c.env, id);
+    if (!await clientEntity.exists()) {
+      return notFound(c, 'Client not found');
+    }
+    const client = await clientEntity.getState();
+    return ok(c, client);
   });
-
-  // CHATS
-  app.get('/api/chats', async (c) => {
-    await ChatBoardEntity.ensureSeed(c.env);
-    const cq = c.req.query('cursor');
-    const lq = c.req.query('limit');
-    const page = await ChatBoardEntity.list(c.env, cq ?? null, lq ? Math.max(1, (Number(lq) | 0)) : undefined);
-    return ok(c, page);
+  // Create a new client
+  app.post('/api/clients', async (c) => {
+    const body = await c.req.json<Partial<Client>>();
+    if (!body.company || !body.email) {
+      return bad(c, 'Company and email are required');
+    }
+    const newClient: Client = {
+      ...ClientEntity.initialState,
+      ...body,
+      id: crypto.randomUUID(),
+      createdAt: new Date().toISOString(),
+    };
+    const created = await ClientEntity.create(c.env, newClient);
+    return ok(c, created);
   });
-
-  app.post('/api/chats', async (c) => {
-    const { title } = (await c.req.json()) as { title?: string };
-    if (!title?.trim()) return bad(c, 'title required');
-    const created = await ChatBoardEntity.create(c.env, { id: crypto.randomUUID(), title: title.trim(), messages: [] });
-    return ok(c, { id: created.id, title: created.title });
+  // Update a client
+  app.put('/api/clients/:id', async (c) => {
+    const id = c.req.param('id');
+    const body = await c.req.json<Partial<Client>>();
+    const clientEntity = new ClientEntity(c.env, id);
+    if (!await clientEntity.exists()) {
+      return notFound(c, 'Client not found');
+    }
+    await clientEntity.patch(body);
+    const updatedClient = await clientEntity.getState();
+    return ok(c, updatedClient);
   });
-
-  // MESSAGES
-  app.get('/api/chats/:chatId/messages', async (c) => {
-    const chat = new ChatBoardEntity(c.env, c.req.param('chatId'));
-    if (!await chat.exists()) return notFound(c, 'chat not found');
-    return ok(c, await chat.listMessages());
+  // Delete a client
+  app.delete('/api/clients/:id', async (c) => {
+    const id = c.req.param('id');
+    const deleted = await ClientEntity.delete(c.env, id);
+    if (!deleted) {
+      return notFound(c, 'Client not found or already deleted');
+    }
+    return ok(c, { id, deleted: true });
   });
-
-  app.post('/api/chats/:chatId/messages', async (c) => {
-    const chatId = c.req.param('chatId');
-    const { userId, text } = (await c.req.json()) as { userId?: string; text?: string };
-    if (!isStr(userId) || !text?.trim()) return bad(c, 'userId and text required');
-    const chat = new ChatBoardEntity(c.env, chatId);
-    if (!await chat.exists()) return notFound(c, 'chat not found');
-    return ok(c, await chat.sendMessage(userId, text.trim()));
+  // Add a file to a client
+  app.post('/api/clients/:id/files', async (c) => {
+    const id = c.req.param('id');
+    const fileMetadata = await c.req.json<Omit<UploadedFile, 'id' | 'uploadDate'>>();
+    const clientEntity = new ClientEntity(c.env, id);
+    if (!await clientEntity.exists()) {
+      return notFound(c, 'Client not found');
+    }
+    const newFile: UploadedFile = {
+      ...fileMetadata,
+      id: crypto.randomUUID(),
+      uploadDate: new Date().toISOString(),
+    };
+    await clientEntity.mutate(client => ({
+      ...client,
+      uploadedFiles: [...client.uploadedFiles, newFile],
+    }));
+    const updatedClient = await clientEntity.getState();
+    return ok(c, updatedClient);
   });
-
-  // DELETE: Users
-  app.delete('/api/users/:id', async (c) => ok(c, { id: c.req.param('id'), deleted: await UserEntity.delete(c.env, c.req.param('id')) }));
-
-  app.post('/api/users/deleteMany', async (c) => {
-    const { ids } = (await c.req.json()) as { ids?: string[] };
-    const list = ids?.filter(isStr) ?? [];
-    if (list.length === 0) return bad(c, 'ids required');
-    return ok(c, { deletedCount: await UserEntity.deleteMany(c.env, list), ids: list });
+  // LEADS API
+  // List all leads
+  app.get('/api/leads', async (c) => {
+    await LeadEntity.ensureSeed(c.env);
+    // For this Kanban, we fetch all leads. Pagination could be added for a table view.
+    const page = await LeadEntity.list(c.env, null, 100); // Limit to 100 for now
+    return ok(c, page.items);
   });
-
-  // DELETE: Chats
-  app.delete('/api/chats/:id', async (c) => ok(c, { id: c.req.param('id'), deleted: await ChatBoardEntity.delete(c.env, c.req.param('id')) }));
-
-  app.post('/api/chats/deleteMany', async (c) => {
-    const { ids } = (await c.req.json()) as { ids?: string[] };
-    const list = ids?.filter(isStr) ?? [];
-    if (list.length === 0) return bad(c, 'ids required');
-    return ok(c, { deletedCount: await ChatBoardEntity.deleteMany(c.env, list), ids: list });
+  // Update a lead's stage
+  app.put('/api/leads/:id/stage', async (c) => {
+    const id = c.req.param('id');
+    const { stage } = await c.req.json<{ stage: PipelineStage }>();
+    if (!stage) {
+      return bad(c, 'Stage is required');
+    }
+    const leadEntity = new LeadEntity(c.env, id);
+    if (!await leadEntity.exists()) {
+      return notFound(c, 'Lead not found');
+    }
+    await leadEntity.patch({ stage });
+    const updatedLead = await leadEntity.getState();
+    return ok(c, updatedLead);
   });
 }
