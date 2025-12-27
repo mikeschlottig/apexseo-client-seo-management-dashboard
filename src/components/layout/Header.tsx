@@ -1,3 +1,4 @@
+import React from 'react';
 import { useLocation } from "react-router-dom";
 import { Search, Bell, Menu } from "lucide-react";
 import { Input } from "@/components/ui/input";
