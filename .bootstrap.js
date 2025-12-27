@@ -81,7 +81,9 @@ function runSetupCommands() {
     "bun install @tanstack/react-table",
     "bun add @tanstack/react-table",
     "bun add react-dropzone",
-    "bun install react-dropzone @tanstack/react-table"
+    "bun install react-dropzone @tanstack/react-table",
+    "bun add jspdf html2canvas",
+    "bun add @types/jspdf @types/html2canvas -D"
 ];
     
     if (commands.length === 0) {
