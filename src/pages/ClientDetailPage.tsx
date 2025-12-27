@@ -1,7 +1,9 @@
 import React, { useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
-import { ArrowLeft, Terminal, Pencil } from "lucide-react";
+import { ArrowLeft, Terminal, Pencil, Home, ChevronRight, Mail, Calendar, FileText, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
 import { ClientInfoCard } from "@/components/clients/ClientInfoCard";
 import { SEOMetricsCard } from "@/components/clients/SEOMetricsCard";
 import { ClientFilesCard } from "@/components/clients/ClientFilesCard";
@@ -11,6 +13,7 @@ import { toast } from "sonner";
 import { useClientStore } from "@/store/client-store";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { formatDistanceToNow } from 'date-fns';
 export default function ClientDetailPage() {
   const { clientId } = useParams<{ clientId: string }>();
   const currentClient = useClientStore((state) => state.currentClient);
@@ -117,6 +120,20 @@ export default function ClientDetailPage() {
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       <div className="py-8 md:py-10 lg:py-12">
         <div className="space-y-8 animate-fade-in">
+          {/* Breadcrumb Navigation */}
+          <nav className="flex items-center space-x-2 text-sm text-muted-foreground">
+            <Link to="/" className="hover:text-foreground transition-colors flex items-center gap-1">
+              <Home className="h-4 w-4" />
+              Home
+            </Link>
+            <ChevronRight className="h-4 w-4" />
+            <Link to="/clients" className="hover:text-foreground transition-colors">
+              Clients
+            </Link>
+            <ChevronRight className="h-4 w-4" />
+            <span className="text-foreground font-medium">{currentClient.company}</span>
+          </nav>
+
           <div className="flex items-center gap-4">
             <Button asChild variant="outline" size="icon" className="h-7 w-7 hover:bg-accent hover:-translate-x-1 transition-all">
               <Link to="/clients">
@@ -132,9 +149,60 @@ export default function ClientDetailPage() {
               </Button>
             </div>
           </div>
+
+          {/* Quick Actions */}
+          <div className="flex gap-2 flex-wrap">
+            <Button variant="outline" size="sm" className="gap-2" onClick={() => window.location.href = `mailto:${currentClient.email}`}>
+              <Mail className="h-4 w-4" />
+              Send Email
+            </Button>
+            <Button variant="outline" size="sm" className="gap-2">
+              <Calendar className="h-4 w-4" />
+              Schedule Meeting
+            </Button>
+            <Button variant="outline" size="sm" className="gap-2" asChild>
+              <Link to="/reports">
+                <FileText className="h-4 w-4" />
+                Generate Report
+              </Link>
+            </Button>
+          </div>
+
           <div className="grid gap-8 lg:grid-cols-3">
             <div className="lg:col-span-1 space-y-8">
               <ClientInfoCard client={currentClient} />
+              
+              {/* Activity Timeline */}
+              <Card className="hover:shadow-md transition-shadow duration-300">
+                <CardHeader>
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    <Clock className="h-5 w-5 text-primary" />
+                    Recent Activity
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {currentClient.uploadedFiles.length > 0 ? (
+                    currentClient.uploadedFiles.slice(0, 3).map((file, idx) => (
+                      <div key={file.id}>
+                        {idx > 0 && <Separator className="my-2" />}
+                        <div className="flex items-start gap-3">
+                          <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                            <FileText className="h-4 w-4 text-primary" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium truncate">{file.fileName}</p>
+                            <p className="text-xs text-muted-foreground">
+                              Uploaded {formatDistanceToNow(new Date(file.uploadDate), { addSuffix: true })}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <p className="text-sm text-muted-foreground text-center py-4">No recent activity</p>
+                  )}
+                </CardContent>
+              </Card>
             </div>
             <div className="lg:col-span-2 space-y-8">
               <SEOMetricsCard seoStats={currentClient.seoStats} />

@@ -16,7 +16,7 @@ export function isValidURL(url: string): boolean {
   }
 }
 export function isValidPhone(phone: string): boolean {
-  const phoneRegex = /^[\d\s\-+()]+$/;
+  const phoneRegex = /^[\d\s\-\+\(\)]+$/;
   return phoneRegex.test(phone) && phone.replace(/\D/g, '').length >= 10;
 }
 export function isValidDateRange(start: string, end: string): boolean {

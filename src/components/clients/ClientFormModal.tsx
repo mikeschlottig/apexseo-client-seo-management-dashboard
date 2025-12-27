@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -15,7 +15,9 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Slider } from '@/components/ui/slider';
-import { Loader2, Check } from 'lucide-react';
+import { Progress } from '@/components/ui/progress';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Loader2, Check, Save, HelpCircle } from 'lucide-react';
 import { Client } from '@shared/types';
 import { cn } from '@/lib/utils';
 const clientSchema = z.object({
@@ -39,6 +41,7 @@ interface ClientFormModalProps {
 export function ClientFormModal({ open, onClose, client, onSubmit }: ClientFormModalProps) {
   const [isSubmitting, setIsSubmitting] = React.useState(false);
   const [showSuccess, setShowSuccess] = React.useState(false);
+  const [draftSaved, setDraftSaved] = React.useState(false);
   const {
     register,
     handleSubmit,
@@ -46,6 +49,7 @@ export function ClientFormModal({ open, onClose, client, onSubmit }: ClientFormM
     setValue,
     watch,
     reset,
+    formState: { isDirty },
   } = useForm<ClientFormData>({
     resolver: zodResolver(clientSchema),
     defaultValues: client
@@ -100,10 +104,50 @@ export function ClientFormModal({ open, onClose, client, onSubmit }: ClientFormM
       });
     }
   }, [open, client, reset]);
+  // Autosave draft
+  useEffect(() => {
+    if (!open || !isDirty) return;
+
+    const timer = setTimeout(() => {
+      const formData = watch();
+      localStorage.setItem('clientFormDraft', JSON.stringify(formData));
+      setDraftSaved(true);
+      setTimeout(() => setDraftSaved(false), 2000);
+    }, 5000);
+
+    return () => clearTimeout(timer);
+  }, [watch, open, isDirty]);
+
+  // Load draft on mount
+  useEffect(() => {
+    if (open && !client) {
+      const draft = localStorage.getItem('clientFormDraft');
+      if (draft) {
+        try {
+          const parsed = JSON.parse(draft);
+          reset(parsed);
+        } catch (e) {
+          console.error('Failed to load draft:', e);
+        }
+      }
+    }
+  }, [open, client, reset]);
+
+  const formCompletion = useMemo(() => {
+    const values = watch();
+    const fields = Object.keys(clientSchema.shape);
+    const completed = fields.filter(key => {
+      const value = values[key as keyof ClientFormData];
+      return value !== '' && value !== 0 && value !== undefined;
+    }).length;
+    return Math.round((completed / fields.length) * 100);
+  }, [watch]);
+
   const handleFormSubmit = async (data: ClientFormData) => {
     setIsSubmitting(true);
     try {
       await onSubmit(data);
+      localStorage.removeItem('clientFormDraft');
       setShowSuccess(true);
       setTimeout(() => {
         setShowSuccess(false);
@@ -115,6 +159,13 @@ export function ClientFormModal({ open, onClose, client, onSubmit }: ClientFormM
       setIsSubmitting(false);
     }
   };
+  const handleSaveDraft = () => {
+    const formData = watch();
+    localStorage.setItem('clientFormDraft', JSON.stringify(formData));
+    toast.success('Draft saved');
+    onClose();
+  };
+
   const getSliderColor = (value: number) => {
     if (value < 40) return 'bg-red-500';
     if (value < 70) return 'bg-yellow-500';
@@ -134,7 +185,20 @@ export function ClientFormModal({ open, onClose, client, onSubmit }: ClientFormM
             <DialogDescription>
               {client ? 'Update client information and SEO metrics.' : 'Enter client information and initial SEO metrics.'}
               <span className="text-xs text-muted-foreground block mt-1">Press Esc to cancel, Ctrl+Enter to save</span>
+              {draftSaved && (
+                <span className="text-xs text-green-600 flex items-center gap-1 mt-1">
+                  <Save className="h-3 w-3" />
+                  Draft saved
+                </span>
+              )}
             </DialogDescription>
+            <div className="mt-4">
+              <div className="flex justify-between text-xs text-muted-foreground mb-1">
+                <span>Form completion</span>
+                <span>{formCompletion}%</span>
+              </div>
+              <Progress value={formCompletion} className="h-1" />
+            </div>
           </DialogHeader>
           <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-6">
             <div className="space-y-4">
@@ -142,9 +206,19 @@ export function ClientFormModal({ open, onClose, client, onSubmit }: ClientFormM
                 <h3 className="text-lg font-semibold mb-4">Company Information</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="company" className="font-medium">
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Label htmlFor="company" className="font-medium flex items-center gap-1">
                       Company Name <span className="text-primary">*</span>
+                            <HelpCircle className="h-3 w-3 text-muted-foreground" />
                     </Label>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>The official company name</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
                     <Input
                       id="company"
                       {...register('company')}
@@ -360,6 +434,12 @@ export function ClientFormModal({ open, onClose, client, onSubmit }: ClientFormM
               <Button type="button" variant="outline" onClick={onClose} disabled={isSubmitting}>
                 Cancel
               </Button>
+              {!client && (
+                <Button type="button" variant="outline" onClick={handleSaveDraft} disabled={isSubmitting}>
+                  <Save className="mr-2 h-4 w-4" />
+                  Save Draft
+                </Button>
+              )}
               <Button type="submit" disabled={isSubmitting || showSuccess} className="min-w-[120px]">
                 {showSuccess ? (
                   <motion.div
