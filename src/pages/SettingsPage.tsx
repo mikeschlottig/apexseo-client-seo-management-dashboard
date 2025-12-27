@@ -15,39 +15,44 @@ export default function SettingsPage() {
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       <div className="py-8 md:py-10 lg:py-12">
-        <h2 className="text-3xl font-bold tracking-tight mb-6">Settings</h2>
-        <div className="space-y-6">
-          <Card>
+        <h2 className="text-4xl font-bold tracking-tight mb-6">Settings</h2>
+        <div className="space-y-8">
+          <Card className="hover:shadow-md transition-shadow duration-300">
             <CardHeader>
-              <CardTitle>Profile Settings</CardTitle>
+              <CardTitle className="text-xl font-semibold">Profile Settings</CardTitle>
               <CardDescription>Manage your account information</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="name">Name</Label>
+                <Label htmlFor="name" className="font-medium">Name</Label>
                 <Input id="name" defaultValue="John Doe" disabled />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
+                <Label htmlFor="email" className="font-medium">Email</Label>
                 <Input id="email" type="email" defaultValue="john.doe@apexseo.com" disabled />
               </div>
             </CardContent>
           </Card>
-          <Card>
+          <Card className="hover:shadow-md transition-shadow duration-300">
             <CardHeader>
-              <CardTitle>Preferences</CardTitle>
+              <CardTitle className="text-xl font-semibold">Preferences</CardTitle>
               <CardDescription>Customize your experience</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="flex items-center justify-between">
                 <div className="space-y-0.5">
-                  <Label htmlFor="theme">Dark Mode</Label>
+                  <Label htmlFor="theme" className="font-medium">Dark Mode</Label>
                   <p className="text-sm text-muted-foreground">Toggle dark mode theme</p>
                 </div>
-                <Switch id="theme" checked={isDark} onCheckedChange={toggleTheme} />
+                <Switch 
+                  id="theme" 
+                  checked={isDark} 
+                  onCheckedChange={toggleTheme}
+                  className="transition-all duration-200"
+                />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="language">Language</Label>
+                <Label htmlFor="language" className="font-medium">Language</Label>
                 <Select defaultValue="en">
                   <SelectTrigger id="language">
                     <SelectValue placeholder="Select language" />
@@ -61,30 +66,39 @@ export default function SettingsPage() {
               </div>
             </CardContent>
           </Card>
-          <Card>
+          <Card className="hover:shadow-md transition-shadow duration-300">
             <CardHeader>
-              <CardTitle>Notifications</CardTitle>
+              <CardTitle className="text-xl font-semibold">Notifications</CardTitle>
               <CardDescription>Manage how you receive notifications</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="flex items-center justify-between">
                 <div className="space-y-0.5">
-                  <Label htmlFor="email-notifications">Email Notifications</Label>
+                  <Label htmlFor="email-notifications" className="font-medium">Email Notifications</Label>
                   <p className="text-sm text-muted-foreground">Receive updates via email</p>
                 </div>
-                <Switch id="email-notifications" defaultChecked />
+                <Switch 
+                  id="email-notifications" 
+                  defaultChecked 
+                  className="transition-all duration-200"
+                />
               </div>
               <div className="flex items-center justify-between">
                 <div className="space-y-0.5">
-                  <Label htmlFor="push-notifications">Push Notifications</Label>
+                  <Label htmlFor="push-notifications" className="font-medium">Push Notifications</Label>
                   <p className="text-sm text-muted-foreground">Receive browser notifications</p>
                 </div>
-                <Switch id="push-notifications" />
+                <Switch 
+                  id="push-notifications"
+                  className="transition-all duration-200"
+                />
               </div>
             </CardContent>
           </Card>
           <div className="flex justify-end">
-            <Button onClick={handleSave}>Save Changes</Button>
+            <Button onClick={handleSave} className="hover:scale-105 transition-transform">
+              Save Changes
+            </Button>
           </div>
           <p className="text-sm text-muted-foreground text-center">
             This is a placeholder page for demonstration purposes.

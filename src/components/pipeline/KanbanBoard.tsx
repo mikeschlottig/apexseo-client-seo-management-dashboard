@@ -1,15 +1,12 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { DndContext, DragEndEvent, DragOverlay, DragStartEvent, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
-
+import { createPortal } from 'react-dom';
 import { KanbanColumn } from './KanbanColumn';
 import { LeadCard } from './LeadCard';
 import { useLeadStore } from '@/store/lead-store';
 import { Lead, PIPELINE_STAGES, PipelineStage } from '@shared/types';
-import { createPortal } from 'react-dom';
-import { useState } from 'react';
 export function KanbanBoard() {
   const leads = useLeadStore((state) => state.leads);
-  const moveLead = useLeadStore((state) => state.moveLead);
   const updateLeadStage = useLeadStore((state) => state.updateLeadStage);
   const [activeLead, setActiveLead] = useState<Lead | null>(null);
   const leadsByStage = useMemo(() => {
@@ -46,21 +43,18 @@ export function KanbanBoard() {
     if (!over) {
       return;
     }
-
     const leadId = active.id as string;
-    const newStage = over.data.current?.type === 'COLUMN' 
-      ? over.id as PipelineStage 
+    const newStage = over.data.current?.type === 'COLUMN'
+      ? over.id as PipelineStage
       : over.data.current?.stage as PipelineStage;
     const currentLead = leads.find(l => l.id === leadId);
-
     if (currentLead && newStage && currentLead.stage !== newStage) {
-      // updateLeadStage handles both optimistic update and API call
       updateLeadStage(leadId, newStage);
     }
   };
   return (
     <DndContext onDragStart={handleDragStart} onDragEnd={handleDragEnd} sensors={sensors}>
-      <div className="flex-1 grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4 items-start">
+      <div className="flex-1 grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-6 items-start">
         {PIPELINE_STAGES.map((stage) => (
           <KanbanColumn key={stage} stage={stage} leads={leadsByStage[stage]} />
         ))}

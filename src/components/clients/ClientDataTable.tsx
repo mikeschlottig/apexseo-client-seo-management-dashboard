@@ -1,7 +1,6 @@
 "use client";
 import React from "react";
 import {
-  ColumnDef,
   ColumnFiltersState,
   SortingState,
   flexRender,
@@ -29,32 +28,27 @@ import { api } from "@/lib/api-client";
 import { toast } from "sonner";
 import { Client } from "@shared/types";
 import { useClientStore } from "@/store/client-store";
-interface DataTableProps<TData, TValue> {
+interface DataTableProps<TData extends Client> {
   data: TData[];
 }
-export function ClientDataTable<TData extends Client, TValue>({
+export function ClientDataTable<TData extends Client>({
   data,
-}: DataTableProps<TData, TValue>) {
+}: DataTableProps<TData>) {
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);
   const [editingClient, setEditingClient] = React.useState<Client | null>(null);
   const [deletingClient, setDeletingClient] = React.useState<Client | null>(null);
-
   const fetchClients = useClientStore((state) => state.fetchClients);
-
   const handleEdit = (client: Client) => {
     setEditingClient(client);
   };
-
   const handleDelete = (client: Client) => {
     setDeletingClient(client);
   };
-
   const columns = React.useMemo(
-    () => createClientColumns(handleEdit, handleDelete) as ColumnDef<TData, TValue>[],
+    () => createClientColumns(handleEdit, handleDelete),
     []
   );
-
   const handleUpdateClient = async (data: any) => {
     if (!editingClient) return;
     try {
@@ -83,7 +77,6 @@ export function ClientDataTable<TData extends Client, TValue>({
       throw error;
     }
   };
-
   const handleConfirmDelete = async () => {
     if (!deletingClient) return;
     try {
@@ -189,14 +182,12 @@ export function ClientDataTable<TData extends Client, TValue>({
           </Button>
         </div>
       </CardContent>
-
       <ClientFormModal
         open={!!editingClient}
         onClose={() => setEditingClient(null)}
         client={editingClient}
         onSubmit={handleUpdateClient}
       />
-
       <DeleteClientDialog
         open={!!deletingClient}
         onClose={() => setDeletingClient(null)}

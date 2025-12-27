@@ -24,7 +24,7 @@ export function Header() {
   const location = useLocation();
   const pageTitle = getPageTitle(location.pathname);
   return (
-    <header className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b bg-background/80 backdrop-blur-lg px-4 sm:px-6 lg:px-8">
+    <header className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b bg-background/80 backdrop-blur-xl shadow-sm px-4 sm:px-6 lg:px-8">
       <div className="md:hidden">
         <Sheet>
           <SheetTrigger asChild>
@@ -40,8 +40,8 @@ export function Header() {
       </div>
       <h1 className="text-xl font-semibold hidden md:block">{pageTitle}</h1>
       <div className="flex items-center gap-2 md:gap-4 md:ml-auto w-full md:w-auto">
-        <div className="relative w-full md:w-64 lg:w-96">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+        <div className="relative w-full md:w-64 lg:w-96 focus-within:ring-2 focus-within:ring-primary focus-within:ring-offset-2 rounded-md transition-all">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground transition-transform focus-within:scale-110" />
           <Input
             type="search"
             placeholder="Search clients, tasks..."
@@ -49,13 +49,14 @@ export function Header() {
           />
         </div>
         <ThemeToggle className="relative" />
-        <Button variant="ghost" size="icon" className="rounded-full">
+        <Button variant="ghost" size="icon" className="rounded-full relative hover:scale-110 transition-transform">
           <Bell className="h-5 w-5" />
+          <span className="absolute top-1 right-1 h-2 w-2 bg-red-500 rounded-full animate-pulse" />
           <span className="sr-only">Notifications</span>
         </Button>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="relative h-8 w-8 rounded-full">
+            <Button variant="ghost" className="relative h-8 w-8 rounded-full hover:scale-110 transition-transform">
               <Avatar className="h-8 w-8">
                 <AvatarImage src="https://i.pravatar.cc/150?u=a042581f4e29026704d" alt="User" />
                 <AvatarFallback>U</AvatarFallback>

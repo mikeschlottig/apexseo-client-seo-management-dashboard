@@ -8,10 +8,13 @@ import { RecentActivityFeed } from '@/components/dashboard/RecentActivityFeed';
 import { TasksOverview } from '@/components/dashboard/TasksOverview';
 import { Users, TrendingUp, Target, Briefcase } from 'lucide-react';
 export default function DashboardPage() {
-  const { clients, fetchClients, isLoading: clientsLoading } = useClientStore();
-  const { leads, fetchLeads, isLoading: leadsLoading } = useLeadStore();
+  const clients = useClientStore((state) => state.clients);
+  const fetchClients = useClientStore((state) => state.fetchClients);
+  const isLoadingClients = useClientStore((state) => state.isLoading);
+  const leads = useLeadStore((state) => state.leads);
+  const fetchLeads = useLeadStore((state) => state.fetchLeads);
+  const isLoadingLeads = useLeadStore((state) => state.isLoading);
   useEffect(() => {
-    // Fetch data if not already loaded
     if (clients.length === 0) fetchClients();
     if (leads.length === 0) fetchLeads();
   }, [fetchClients, fetchLeads, clients.length, leads.length]);
@@ -27,59 +30,71 @@ export default function DashboardPage() {
       totalPipelineValue,
     };
   }, [clients, leads]);
-  const isLoading = clientsLoading || leadsLoading;
+  const isLoading = isLoadingClients || isLoadingLeads;
   return (
-    <div className="space-y-6 animate-fade-in">
-      <h2 className="text-3xl font-bold tracking-tight">Dashboard</h2>
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-        <StatCard 
-          title="Total Clients" 
-          value={dashboardStats.totalClients} 
-          icon={Users} 
-          description="Currently managed"
-          isLoading={isLoading}
-        />
-        <StatCard 
-          title="Aggregate SEO Clicks" 
-          value={new Intl.NumberFormat().format(dashboardStats.totalSeoClicks)} 
-          icon={TrendingUp} 
-          description="Monthly"
-          isLoading={isLoading}
-        />
-        <StatCard 
-          title="Active Leads" 
-          value={dashboardStats.activeLeads} 
-          icon={Target} 
-          description="In pipeline"
-          isLoading={isLoading}
-        />
-        <StatCard 
-          title="Total Pipeline Value" 
-          value={new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(dashboardStats.totalPipelineValue)} 
-          icon={Briefcase} 
-          description="Estimated total value"
-          isLoading={isLoading}
-        />
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="py-8 md:py-10 lg:py-12">
+        <div className="space-y-8 animate-fade-in">
+          <h2 className="text-4xl font-bold tracking-tight">Dashboard</h2>
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+            <div style={{ animationDelay: '0ms' }} className="animate-fade-in">
+              <StatCard
+                title="Total Clients"
+                value={dashboardStats.totalClients}
+                icon={Users}
+                description="Currently managed"
+                isLoading={isLoading}
+              />
+            </div>
+            <div style={{ animationDelay: '100ms' }} className="animate-fade-in">
+              <StatCard
+                title="Aggregate SEO Clicks"
+                value={new Intl.NumberFormat().format(dashboardStats.totalSeoClicks)}
+                icon={TrendingUp}
+                description="Monthly"
+                isLoading={isLoading}
+              />
+            </div>
+            <div style={{ animationDelay: '200ms' }} className="animate-fade-in">
+              <StatCard
+                title="Active Leads"
+                value={dashboardStats.activeLeads}
+                icon={Target}
+                description="In pipeline"
+                isLoading={isLoading}
+              />
+            </div>
+            <div style={{ animationDelay: '300ms' }} className="animate-fade-in">
+              <StatCard
+                title="Total Pipeline Value"
+                value={new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(dashboardStats.totalPipelineValue)}
+                icon={Briefcase}
+                description="Estimated total value"
+                isLoading={isLoading}
+              />
+            </div>
+          </div>
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="lg:col-span-2">
+              <PipelineStageChart />
+            </div>
+            <div>
+              <ClientIndustryChart />
+            </div>
+          </div>
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="lg:col-span-2">
+              <RecentActivityFeed />
+            </div>
+            <div>
+              <TasksOverview />
+            </div>
+          </div>
+          <footer className="text-center text-sm text-muted-foreground pt-8">
+            Built with ❤️ at Cloudflare
+          </footer>
+        </div>
       </div>
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2">
-          <PipelineStageChart />
-        </div>
-        <div>
-          <ClientIndustryChart />
-        </div>
-      </div>
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2">
-          <RecentActivityFeed />
-        </div>
-        <div>
-          <TasksOverview />
-        </div>
-      </div>
-      <footer className="text-center text-sm text-muted-foreground pt-8">
-        Built with ❤️ at Cloudflare
-      </footer>
     </div>
   );
 }
