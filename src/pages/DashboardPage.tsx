@@ -34,21 +34,8 @@ export default function DashboardPage() {
       setLastUpdated(new Date());
     }, 30000);
     return () => clearInterval(interval);
-  }, []);  // Keyboard shortcuts
-  useEffect(() => {
-    const handleKeyPress = React.useCallback((e: KeyboardEvent) => {
-      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
-      if (e.key === 'e' || e.key === 'E') {
-        handleExport();
-      } else if (e.key === 'r' || e.key === 'R') {
-        fetchClients();
-        fetchLeads();        setLastUpdated(new Date());
-        toast.success('Dashboard refreshed');
-      }
-    }, [fetchClients, fetchLeads, handleExport]);
-    window.addEventListener('keydown', handleKeyPress);
-    return () => window.removeEventListener('keydown', handleKeyPress);
-  }, [fetchClients, fetchLeads, handleExport, handleKeyPress]);
+  }, []);
+
   const getDateThreshold = (range: TimeRange): Date | null => {
     if (range === 'all') return null;
     const days = range === '7d' ? 7 : range === '30d' ? 30 : 90;
@@ -66,17 +53,7 @@ export default function DashboardPage() {
     if (!threshold) return leads;
     return leads.filter(l => new Date(l.createdAt) >= threshold);
   }, [leads, timeRange]);
-  const dashboardStats = useMemo(() => {
-    const totalClients = filteredClients.length;
-    const totalSeoClicks = filteredClients.reduce((sum, client) => sum + client.seoStats.seoClicks, 0);
-    const activeLeads = filteredLeads.filter(lead => lead.stage !== 'Won' && lead.stage !== 'Lost').length;
-    const totalPipelineValue = filteredLeads.reduce((sum, lead) => sum + lead.estimatedValue, 0);
-    return {
-      totalClients,
-      totalSeoClicks,
-      activeLeads,
-      totalPipelineValue,    };
-  }, [filteredClients, filteredLeads]);
+
   const handleExport = React.useCallback(() => {
     const data = filteredClients.map(c => ({
       Company: c.company,
@@ -90,6 +67,35 @@ export default function DashboardPage() {
       toast.success('Dashboard data exported successfully');
     }
   }, [filteredClients]);
+
+  // Keyboard shortcuts
+  const handleKeyPress = React.useCallback((e: KeyboardEvent) => {
+    if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+    if (e.key === 'e' || e.key === 'E') {
+      handleExport();
+    } else if (e.key === 'r' || e.key === 'R') {
+      fetchClients();
+      fetchLeads();
+      setLastUpdated(new Date());
+      toast.success('Dashboard refreshed');
+    }
+  }, [fetchClients, fetchLeads, handleExport]);
+
+  useEffect(() => {
+    window.addEventListener('keydown', handleKeyPress);
+    return () => window.removeEventListener('keydown', handleKeyPress);
+  }, [handleKeyPress]);
+  const dashboardStats = useMemo(() => {
+    const totalClients = filteredClients.length;
+    const totalSeoClicks = filteredClients.reduce((sum, client) => sum + client.seoStats.seoClicks, 0);
+    const activeLeads = filteredLeads.filter(lead => lead.stage !== 'Won' && lead.stage !== 'Lost').length;
+    const totalPipelineValue = filteredLeads.reduce((sum, lead) => sum + lead.estimatedValue, 0);
+    return {
+      totalClients,
+      totalSeoClicks,
+      activeLeads,
+      totalPipelineValue,    };
+  }, [filteredClients, filteredLeads]);
   const isLoading = isLoadingClients || isLoadingLeads;
   if (!isLoading && filteredClients.length === 0 && filteredLeads.length === 0) {
     return (

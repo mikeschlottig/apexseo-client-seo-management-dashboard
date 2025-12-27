@@ -22,19 +22,6 @@ export default function ClientsPage() {
   useEffect(() => {
     fetchClients();
   }, [fetchClients]);
-  // Keyboard shortcuts
-  useKeyboardShortcuts({
-    'n': {
-      handler: () => setIsModalOpen(true),
-      description: 'New Client',
-      showToast: false,
-    },
-    'e': {
-      handler: handleExportAll,
-      description: 'Export Clients',
-      showToast: false,
-    },
-  });
 
   const handleExportAll = () => {
     const data = clients.map(c => ({
@@ -48,6 +35,20 @@ export default function ClientsPage() {
     }));
     exportToCSV(data, `clients-export-${new Date().toISOString().split('T')[0]}.csv`);
   };
+
+  // Keyboard shortcuts
+  useKeyboardShortcuts({
+    'n': {
+      handler: () => setIsModalOpen(true),
+      description: 'New Client',
+      showToast: false,
+    },
+    'e': {
+      handler: handleExportAll,
+      description: 'Export Clients',
+      showToast: false,
+    },
+  });
 
   const handleCreateClient = async (data: any) => {
     try {
