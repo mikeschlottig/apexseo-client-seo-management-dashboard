@@ -1,6 +1,6 @@
 # ApexSEO: Client & SEO Management Dashboard
 
-[cloudflarebutton]
+[![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/mikeschlottig/apexseo-client-seo-management-dashboard)
 
 ApexSEO is a comprehensive, visually stunning dashboard designed for SEO agencies and professionals. It integrates a client relationship manager (CRM) with powerful SEO performance tracking and a streamlined sales pipeline. The application features a modular design, allowing users to manage client information, monitor key SEO metrics like indexed keywords and organic traffic, and oversee strategic tasks. A key feature is the ability to upload various audit files (CSV, PDF, etc.) and associate them with specific clients. The sales pipeline offers multiple, intuitive views including a drag-and-drop Kanban board, a detailed table, and a simple list view, all with robust filtering capabilities to efficiently manage leads from inception to conversion.
 
@@ -97,4 +97,4 @@ This project is designed for easy deployment to the Cloudflare ecosystem.
 
 Alternatively, you can deploy directly from your GitHub repository with a single click.
 
-[cloudflarebutton]
+[![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/mikeschlottig/apexseo-client-seo-management-dashboard)
