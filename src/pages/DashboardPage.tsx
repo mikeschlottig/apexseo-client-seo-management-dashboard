@@ -34,26 +34,21 @@ export default function DashboardPage() {
       setLastUpdated(new Date());
     }, 30000);
     return () => clearInterval(interval);
-  }, []);
-
-  // Keyboard shortcuts
+  }, []);  // Keyboard shortcuts
   useEffect(() => {
-    const handleKeyPress = (e: KeyboardEvent) => {
+    const handleKeyPress = React.useCallback((e: KeyboardEvent) => {
       if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
-      
       if (e.key === 'e' || e.key === 'E') {
         handleExport();
       } else if (e.key === 'r' || e.key === 'R') {
         fetchClients();
-        fetchLeads();
-        setLastUpdated(new Date());
+        fetchLeads();        setLastUpdated(new Date());
         toast.success('Dashboard refreshed');
       }
-    };
+    }, [fetchClients, fetchLeads, handleExport]);
     window.addEventListener('keydown', handleKeyPress);
     return () => window.removeEventListener('keydown', handleKeyPress);
-  }, [fetchClients, fetchLeads]);
-
+  }, [fetchClients, fetchLeads, handleExport, handleKeyPress]);
   const getDateThreshold = (range: TimeRange): Date | null => {
     if (range === 'all') return null;
     const days = range === '7d' ? 7 : range === '30d' ? 30 : 90;
@@ -80,11 +75,9 @@ export default function DashboardPage() {
       totalClients,
       totalSeoClicks,
       activeLeads,
-      totalPipelineValue,
-    };
+      totalPipelineValue,    };
   }, [filteredClients, filteredLeads]);
-
-  const handleExport = () => {
+  const handleExport = React.useCallback(() => {
     const data = filteredClients.map(c => ({
       Company: c.company,
       Contact: c.contactPerson,
@@ -93,13 +86,11 @@ export default function DashboardPage() {
       Clicks: c.seoStats.seoClicks,
       Quality: c.seoStats.websiteQualityRating,
     }));
-    const success = exportToCSV(data, `dashboard-export-${new Date().toISOString().split('T')[0]}.csv`);
-    if (success) {
+    const success = exportToCSV(data, `dashboard-export-${new Date().toISOString().split('T')[0]}.csv`);    if (success) {
       toast.success('Dashboard data exported successfully');
     }
-  };
+  }, [filteredClients]);
   const isLoading = isLoadingClients || isLoadingLeads;
-
   if (!isLoading && filteredClients.length === 0 && filteredLeads.length === 0) {
     return (
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">

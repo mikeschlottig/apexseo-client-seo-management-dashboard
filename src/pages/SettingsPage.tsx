@@ -255,35 +255,34 @@ export default function SettingsPage() {
           </AccordionItem>
         </Accordion>
 
-          <div className="flex justify-end">
-            <Button onClick={handleSave} className="hover:scale-105 transition-transform">
-              Save Changes
-            </Button>
-          </div>
-          <p className="text-sm text-muted-foreground text-center">
+        <div className="flex justify-end gap-4 mt-6">
+          <p className="text-sm text-muted-foreground">
             This is a placeholder page for demonstration purposes.
           </p>
+          <Button onClick={handleSave} className="hover:scale-105 transition-transform">
+            Save Changes
+          </Button>
         </div>
-
-        <ConfirmDialog
-          open={showClearDialog}
-          onClose={() => setShowClearDialog(false)}
-          title="Clear Cache?"
-          description="This will clear all cached data including form drafts and preferences. Your clients and leads data will not be affected."
-          confirmLabel="Clear Cache"
-          onConfirm={handleClearCache}
-        />
-
-        <ConfirmDialog
-          open={showResetDialog}
-          onClose={() => setShowResetDialog(false)}
-          title="Reset Application?"
-          description="This will clear ALL data and reload the application. This action cannot be undone. Make sure to export your data first."
-          confirmLabel="Reset"
-          isDangerous
-          onConfirm={handleResetApp}
-        />
       </div>
     </div>
+
+    <ConfirmDialog
+      open={showClearDialog}
+      onClose={() => setShowClearDialog(false)}
+      title="Clear Cache?"
+      description="This will clear all cached data including form drafts and preferences. Your clients and leads data will not be affected."
+      confirmLabel="Clear Cache"
+      onConfirm={handleClearCache}
+    />
+
+    <ConfirmDialog
+      open={showResetDialog}
+      onClose={() => setShowResetDialog(false)}
+      title="Reset Application?"
+      description="This will clear ALL data and reload the application. This action cannot be undone. Make sure to export your data first."
+      confirmLabel="Reset"
+      isDangerous
+      onConfirm={handleResetApp}
+    />
   );
 }
