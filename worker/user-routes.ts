@@ -1,7 +1,7 @@
 import { Hono } from "hono";
 import type { Env } from './core-utils';
 import { ClientEntity, LeadEntity } from "./entities";
-import { ok, bad, notFound } from './core-utils';
+import { ok, bad, notFound, isStr } from './core-utils';
 import type { Client, Lead, PipelineStage, UploadedFile } from "@shared/types";
 export function userRoutes(app: Hono<{ Bindings: Env }>) {
   // CLIENTS API
@@ -118,5 +118,76 @@ export function userRoutes(app: Hono<{ Bindings: Env }>) {
     await leadEntity.patch({ stage });
     const updatedLead = await leadEntity.getState();
     return ok(c, updatedLead);
+  });
+
+  // REPORTS API
+  // Get available clients and leads for report configuration
+  app.get('/api/reports/config', async (c) => {
+    try {
+      await ClientEntity.ensureSeed(c.env);
+      await LeadEntity.ensureSeed(c.env);
+
+      const clientsPage = await ClientEntity.list(c.env, null, 100);
+      const leadsPage = await LeadEntity.list(c.env, null, 100);
+
+      const clients = clientsPage.items.map(client => ({
+        id: client.id,
+        name: client.company,
+      }));
+
+      const leads = leadsPage.items.map(lead => ({
+        id: lead.id,
+        name: lead.company,
+      }));
+
+      return ok(c, { clients, leads });
+    } catch (error) {
+      console.error('[REPORTS CONFIG ERROR]', error);
+      return bad(c, 'Failed to fetch report configuration options');
+    }
+  });
+
+  // Generate report data based on configuration
+  app.post('/api/reports/data', async (c) => {
+    try {
+      const config = await c.req.json<{ type: string; clientIds?: string[]; leadIds?: string[]; sections: string[] }>();
+
+      if (!config.type || !['seo-audit', 'proposal'].includes(config.type)) {
+        return bad(c, 'Invalid report type');
+      }
+
+      if (!config.sections || config.sections.length === 0) {
+        return bad(c, 'At least one section must be selected');
+      }
+
+      const clientIds = config.clientIds || [];
+      const leadIds = config.leadIds || [];
+
+      if (clientIds.length === 0 && leadIds.length === 0) {
+        return bad(c, 'At least one client or lead must be selected');
+      }
+
+      // Fetch selected clients and leads
+      const clients = await Promise.all(clientIds.map(id => new ClientEntity(c.env, id).getState()));
+      const leads = await Promise.all(leadIds.map(id => new LeadEntity(c.env, id).getState()));
+
+      // Calculate aggregate metrics
+      const totalKeywords = clients.reduce((sum, client) => sum + client.seoStats.indexedKeywords, 0);
+      const totalClicks = clients.reduce((sum, client) => sum + client.seoStats.seoClicks, 0);
+      const totalPipelineValue = leads.reduce((sum, lead) => sum + lead.estimatedValue, 0);
+
+      const reportData = {
+        type: config.type,
+        generatedAt: new Date().toISOString(),
+        clients,
+        leads,
+        aggregateMetrics: { totalKeywords, totalClicks, totalPipelineValue, clientCount: clients.length, leadCount: leads.length },
+      };
+
+      return ok(c, reportData);
+    } catch (error) {
+      console.error('[REPORTS DATA ERROR]', error);
+      return bad(c, 'Failed to generate report data');
+    }
   });
 }

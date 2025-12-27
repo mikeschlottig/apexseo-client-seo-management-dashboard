@@ -1,17 +1,15 @@
 import { NavLink } from "react-router-dom";
-import { LayoutDashboard, Users, GitBranch, BarChart, Settings, LifeBuoy } from "lucide-react";
+import { LayoutDashboard, Users, GitBranch, BarChart, Settings, LifeBuoy, FileText } from "lucide-react";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Separator } from "@/components/ui/separator";
 const navItems = [
   { to: "/dashboard", icon: LayoutDashboard, label: "Dashboard" },
   { to: "/clients", icon: Users, label: "Clients" },
   { to: "/pipeline", icon: GitBranch, label: "Sales Pipeline" },
+  { to: "/reports", icon: FileText, label: "Reports" },
 ];
-const disabledNavItems = [
-  { to: "/reports", icon: BarChart, label: "Reports" },
-];
+const disabledNavItems: typeof navItems = [];
 export function Sidebar() {
   return (
     <aside className="hidden md:flex flex-col w-64 bg-muted/40 border-r">
@@ -43,21 +41,6 @@ export function Sidebar() {
               <span>{item.label}</span>
             </NavLink>
           </motion.div>
-        ))}
-        {disabledNavItems.map((item) => (
-          <TooltipProvider key={item.to}>
-            <Tooltip>
-              <TooltipTrigger className="w-full">
-                <div className="flex items-center px-4 py-2.5 text-sm font-medium rounded-md text-muted-foreground/50 cursor-not-allowed">
-                  <item.icon className="h-5 w-5 mr-3" />
-                  <span>{item.label}</span>
-                </div>
-              </TooltipTrigger>
-              <TooltipContent side="right" className="animate-fade-in">
-                <p>Coming Soon!</p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
         ))}
       </nav>
       <Separator className="my-4" />

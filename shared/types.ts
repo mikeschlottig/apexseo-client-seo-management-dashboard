@@ -57,3 +57,30 @@ export interface Lead {
   source: string;
   createdAt: string;
 }
+
+// Report types and configurations
+export type ReportType = 'seo-audit' | 'proposal';
+
+export type SEOAuditSections = 'keywords' | 'tasks' | 'competitors' | 'charts' | 'quality';
+export type ProposalSections = 'clientInfo' | 'metrics' | 'pipelineValue' | 'nextSteps';
+
+export interface ReportConfig {
+  type: ReportType;
+  clientIds?: string[];
+  leadIds?: string[];
+  sections: string[];
+}
+
+export interface ReportData {
+  type: ReportType;
+  generatedAt: string;
+  clients: Client[];
+  leads: Lead[];
+  aggregateMetrics: {
+    totalKeywords: number;
+    totalClicks: number;
+    totalPipelineValue: number;
+    clientCount: number;
+    leadCount: number;
+  };
+}

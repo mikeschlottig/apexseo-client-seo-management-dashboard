@@ -4,6 +4,7 @@ import { RouteErrorBoundary } from "@/components/RouteErrorBoundary";
 import DashboardPage from "@/pages/DashboardPage";
 import ClientsPage from "@/pages/ClientsPage";
 import ClientDetailPage from "@/pages/ClientDetailPage";
+import ReportsPage from "@/pages/ReportsPage";
 import SalesPipelinePage from "@/pages/SalesPipelinePage";
 import SettingsPage from "@/pages/SettingsPage";
 import HelpPage from "@/pages/HelpPage";
@@ -32,6 +33,10 @@ export const router = createBrowserRouter([
       {
         path: "pipeline",
         element: <SalesPipelinePage />,
+      },
+      {
+        path: "reports",
+        element: <ReportsPage />,
       },
       {
         path: "settings",
