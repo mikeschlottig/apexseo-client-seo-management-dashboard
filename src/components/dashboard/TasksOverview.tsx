@@ -5,7 +5,6 @@ import { useMemo } from 'react';
 import { Link } from 'react-router-dom';
 export function TasksOverview() {
   const clients = useClientStore((state) => state.clients);
-  const updateTaskStatus = useClientStore((state) => state.updateTaskStatus);
   const incompleteTasks = useMemo(() => {
     return clients
       .flatMap(client =>
@@ -24,16 +23,14 @@ export function TasksOverview() {
         {incompleteTasks.length > 0 ? (
           <div className="space-y-3">
             {incompleteTasks.map(task => (
-              <div key={task.id} className="flex items-start space-x-3">
+              <div key={`${task.clientId}-${task.id}`} className="flex items-start space-x-3">
                 <Checkbox
-                  id={`task-overview-${task.id}`}
+                  id={`task-overview-${task.clientId}-${task.id}`}
                   className="mt-1"
-                  onCheckedChange={(checked) => {
-                    updateTaskStatus(task.clientId, task.id, !!checked);
-                  }}
+                  disabled
                 />
                 <div>
-                  <label htmlFor={`task-overview-${task.id}`} className="text-sm font-medium leading-none">
+                  <label htmlFor={`task-overview-${task.clientId}-${task.id}`} className="text-sm font-medium leading-none">
                     {task.task}
                   </label>
                   <p className="text-xs text-muted-foreground">

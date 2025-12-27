@@ -1,5 +1,5 @@
 "use client";
-import * as React from "react";
+import React from "react";
 import {
   ColumnDef,
   ColumnFiltersState,
@@ -22,16 +22,82 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
+import { ClientFormModal } from "./ClientFormModal";
+import { DeleteClientDialog } from "./DeleteClientDialog";
+import { createClientColumns } from "./ClientColumns";
+import { api } from "@/lib/api-client";
+import { toast } from "sonner";
+import { Client } from "@shared/types";
+import { useClientStore } from "@/store/client-store";
 interface DataTableProps<TData, TValue> {
-  columns: ColumnDef<TData, TValue>[];
   data: TData[];
 }
-export function ClientDataTable<TData, TValue>({
-  columns,
+export function ClientDataTable<TData extends Client, TValue>({
   data,
 }: DataTableProps<TData, TValue>) {
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);
+  const [editingClient, setEditingClient] = React.useState<Client | null>(null);
+  const [deletingClient, setDeletingClient] = React.useState<Client | null>(null);
+
+  const fetchClients = useClientStore((state) => state.fetchClients);
+
+  const handleEdit = (client: Client) => {
+    setEditingClient(client);
+  };
+
+  const handleDelete = (client: Client) => {
+    setDeletingClient(client);
+  };
+
+  const columns = React.useMemo(
+    () => createClientColumns(handleEdit, handleDelete) as ColumnDef<TData, TValue>[],
+    []
+  );
+
+  const handleUpdateClient = async (data: any) => {
+    if (!editingClient) return;
+    try {
+      await api(`/api/clients/${editingClient.id}`, {
+        method: 'PUT',
+        body: JSON.stringify({
+          company: data.company,
+          contactPerson: data.contactPerson,
+          email: data.email,
+          phone: data.phone,
+          website: data.website,
+          industry: data.industry,
+          seoStats: {
+            ...editingClient.seoStats,
+            indexedKeywords: data.indexedKeywords,
+            seoClicks: data.seoClicks,
+            websiteQualityRating: data.websiteQualityRating,
+          },
+        }),
+      });
+      toast.success('Client updated successfully!');
+      fetchClients();
+      setEditingClient(null);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Failed to update client');
+      throw error;
+    }
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!deletingClient) return;
+    try {
+      await api(`/api/clients/${deletingClient.id}`, {
+        method: 'DELETE',
+      });
+      toast.success('Client deleted successfully!');
+      fetchClients();
+      setDeletingClient(null);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Failed to delete client');
+      throw error;
+    }
+  };
   const table = useReactTable({
     data,
     columns,
@@ -123,6 +189,20 @@ export function ClientDataTable<TData, TValue>({
           </Button>
         </div>
       </CardContent>
+
+      <ClientFormModal
+        open={!!editingClient}
+        onClose={() => setEditingClient(null)}
+        client={editingClient}
+        onSubmit={handleUpdateClient}
+      />
+
+      <DeleteClientDialog
+        open={!!deletingClient}
+        onClose={() => setDeletingClient(null)}
+        clientName={deletingClient?.company || ''}
+        onConfirm={handleConfirmDelete}
+      />
     </Card>
   );
 }

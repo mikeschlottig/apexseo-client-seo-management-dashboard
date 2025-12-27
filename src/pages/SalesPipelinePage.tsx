@@ -1,5 +1,8 @@
-import { useEffect } from "react";
+import React, { useEffect, useMemo } from "react";
 import { KanbanBoard } from "@/components/pipeline/KanbanBoard";
+import { LeadsTable } from "@/components/pipeline/LeadsTable";
+import { PipelineViewToggle } from "@/components/pipeline/PipelineViewToggle";
+import { PipelineFilters } from "@/components/pipeline/PipelineFilters";
 import { useLeadStore } from "@/store/lead-store";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -8,14 +11,41 @@ export default function SalesPipelinePage() {
   const fetchLeads = useLeadStore((state) => state.fetchLeads);
   const isLoading = useLeadStore((state) => state.isLoading);
   const error = useLeadStore((state) => state.error);
+  const leads = useLeadStore((state) => state.leads);
+  const [view, setView] = React.useState<'kanban' | 'table'>('kanban');
+  const [filters, setFilters] = React.useState({
+    stage: null as string | null,
+    source: null as string | null,
+    searchTerm: '',
+  });
   useEffect(() => {
     fetchLeads();
   }, [fetchLeads]);
+  const uniqueSources = useMemo(() => {
+    const sources = new Set(leads.map(lead => lead.source));
+    return Array.from(sources).sort();
+  }, [leads]);
+  const filteredLeads = useMemo(() => {
+    return leads.filter(lead => {
+      if (filters.stage && lead.stage !== filters.stage) return false;
+      if (filters.source && lead.source !== filters.source) return false;
+      if (filters.searchTerm) {
+        const searchLower = filters.searchTerm.toLowerCase();
+        return (
+          lead.company.toLowerCase().includes(searchLower) ||
+          lead.contactPerson.toLowerCase().includes(searchLower)
+        );
+      }
+      return true;
+    });
+  }, [leads, filters]);
   return (
     <div className="space-y-6 h-full flex flex-col">
       <div className="flex items-center justify-between">
         <h2 className="text-3xl font-bold tracking-tight">Sales Pipeline</h2>
+        <PipelineViewToggle view={view} onViewChange={setView} />
       </div>
+      <PipelineFilters filters={filters} sources={uniqueSources} onChange={setFilters} />
       {isLoading && (
         <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4">
           {Array.from({ length: 6 }).map((_, i) => (
@@ -34,7 +64,15 @@ export default function SalesPipelinePage() {
           <AlertDescription>{error}</AlertDescription>
         </Alert>
       )}
-      {!isLoading && !error && <KanbanBoard />}
+      {!isLoading && !error && (
+        <>
+          {view === 'kanban' ? (
+            <KanbanBoard />
+          ) : (
+            <LeadsTable leads={filteredLeads} />
+          )}
+        </>
+      )}
     </div>
   );
 }

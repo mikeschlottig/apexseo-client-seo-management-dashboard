@@ -46,5 +46,37 @@ export function useFileUpload(clientId: string) {
       setIsUploading(false);
     }
   };
-  return { isUploading, uploadFile };
+  const downloadFile = (file: UploadedFile) => {
+    window.open(file.url, '_blank');
+    toast.success(`Opening ${file.fileName}...`);
+  };
+  const deleteFile = async (file: UploadedFile) => {
+    const toastId = toast.loading(`Deleting ${file.fileName}...`);
+    // Optimistic update - remove from local state
+    const originalState = useClientStore.getState();
+    useClientStore.setState(state => {
+      if (state.currentClient && state.currentClient.id === clientId) {
+        state.currentClient.uploadedFiles = state.currentClient.uploadedFiles.filter(f => f.id !== file.id);
+      }
+      const clientInList = state.clients.find(c => c.id === clientId);
+      if (clientInList) {
+        clientInList.uploadedFiles = clientInList.uploadedFiles.filter(f => f.id !== file.id);
+      }
+    });
+    try {
+      await api(`/api/clients/${clientId}/files/${file.id}`, {
+        method: 'DELETE',
+      });
+      toast.success(`${file.fileName} deleted successfully!`, { id: toastId });
+    } catch (error) {
+      // Revert on error
+      useClientStore.setState({
+        currentClient: originalState.currentClient,
+        clients: originalState.clients,
+      });
+      const errorMessage = error instanceof Error ? error.message : 'Delete failed';
+      toast.error(`Failed to delete ${file.fileName}: ${errorMessage}`, { id: toastId });
+    }
+  };
+  return { isUploading, uploadFile, downloadFile, deleteFile };
 }

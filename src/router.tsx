@@ -5,6 +5,8 @@ import DashboardPage from "@/pages/DashboardPage";
 import ClientsPage from "@/pages/ClientsPage";
 import ClientDetailPage from "@/pages/ClientDetailPage";
 import SalesPipelinePage from "@/pages/SalesPipelinePage";
+import SettingsPage from "@/pages/SettingsPage";
+import HelpPage from "@/pages/HelpPage";
 export const router = createBrowserRouter([
   {
     path: "/",
@@ -30,6 +32,14 @@ export const router = createBrowserRouter([
       {
         path: "pipeline",
         element: <SalesPipelinePage />,
+      },
+      {
+        path: "settings",
+        element: <SettingsPage />,
+      },
+      {
+        path: "help",
+        element: <HelpPage />,
       },
     ],
   },

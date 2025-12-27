@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { immer } from 'zustand/middleware/immer';
-import { Client, UploadedFile, TaskStatus } from '@shared/types';
+import { Client } from '@shared/types';
 import { api } from '@/lib/api-client';
 import { toast } from 'sonner';
 type ClientState = {
@@ -9,11 +9,9 @@ type ClientState = {
   isLoading: boolean;
   error: string | null;
 };
-
 type ClientActions = {
   fetchClients: () => Promise<void>;
   fetchClientById: (clientId: string) => Promise<void>;
-  updateTaskStatus: (clientId: string, taskId: string, status: TaskStatus) => void;
 };
 export const useClientStore = create<ClientState & ClientActions>()(
   immer((set, get) => ({
@@ -59,23 +57,6 @@ export const useClientStore = create<ClientState & ClientActions>()(
         set({ isLoading: false, error: errorMessage });
         toast.error(errorMessage);
       }
-    },
-    updateTaskStatus: (clientId, taskId, status) => {
-      set((state) => {
-        const client = state.clients.find(c => c.id === clientId);
-        if (client) {
-          const task = client.strategicTasks.find(t => t.id === taskId);
-          if (task) {
-            task.status = status;
-          }
-        }
-        if (state.currentClient && state.currentClient.id === clientId) {
-          const task = state.currentClient.strategicTasks.find(t => t.id === taskId);
-          if (task) {
-            task.status = status;
-          }
-        }
-      });
     },
   }))
 );

@@ -13,7 +13,10 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
 import { Link } from "react-router-dom";
-export const clientColumns: ColumnDef<Client>[] = [
+export const createClientColumns = (
+  onEdit: (client: Client) => void,
+  onDelete: (client: Client) => void
+): ColumnDef<Client>[] => [
   {
     accessorKey: "company",
     header: ({ column }) => {
@@ -86,11 +89,15 @@ export const clientColumns: ColumnDef<Client>[] = [
             <DropdownMenuItem asChild>
               <Link to={`/clients/${client.id}`}>View details</Link>
             </DropdownMenuItem>
-            <DropdownMenuItem>Edit client</DropdownMenuItem>
-            <DropdownMenuItem className="text-destructive">Delete client</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => onEdit(client)}>Edit client</DropdownMenuItem>
+            <DropdownMenuItem className="text-destructive" onClick={() => onDelete(client)}>
+              Delete client
+            </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       );
     },
   },
 ];
+// For backward compatibility
+export const clientColumns = createClientColumns(() => {}, () => {});

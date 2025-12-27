@@ -80,6 +80,22 @@ export function userRoutes(app: Hono<{ Bindings: Env }>) {
     const updatedClient = await clientEntity.getState();
     return ok(c, updatedClient);
   });
+
+  // Delete a file from a client
+  app.delete('/api/clients/:id/files/:fileId', async (c) => {
+    const id = c.req.param('id');
+    const fileId = c.req.param('fileId');
+    const clientEntity = new ClientEntity(c.env, id);
+    if (!await clientEntity.exists()) {
+      return notFound(c, 'Client not found');
+    }
+    await clientEntity.mutate(client => ({
+      ...client,
+      uploadedFiles: client.uploadedFiles.filter(f => f.id !== fileId),
+    }));
+    const updatedClient = await clientEntity.getState();
+    return ok(c, updatedClient);
+  });
   // LEADS API
   // List all leads
   app.get('/api/leads', async (c) => {

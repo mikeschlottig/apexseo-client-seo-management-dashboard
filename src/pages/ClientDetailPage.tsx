@@ -1,21 +1,57 @@
-import { useEffect } from "react";
+import React, { useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
-import { ArrowLeft, Terminal } from "lucide-react";
+import { ArrowLeft, Terminal, Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ClientInfoCard } from "@/components/clients/ClientInfoCard";
 import { SEOMetricsCard } from "@/components/clients/SEOMetricsCard";
 import { ClientFilesCard } from "@/components/clients/ClientFilesCard";
+import { ClientFormModal } from "@/components/clients/ClientFormModal";
+import { api } from "@/lib/api-client";
+import { toast } from "sonner";
 import { useClientStore } from "@/store/client-store";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 export default function ClientDetailPage() {
   const { clientId } = useParams<{ clientId: string }>();
   const { currentClient, isLoading, error, fetchClientById } = useClientStore();
+  const [isEditModalOpen, setIsEditModalOpen] = React.useState(false);
+
   useEffect(() => {
     if (clientId) {
       fetchClientById(clientId);
     }
   }, [clientId, fetchClientById]);
+  const handleUpdateClient = async (data: any) => {
+    if (!currentClient) return;
+    try {
+      await api(`/api/clients/${currentClient.id}`, {
+        method: 'PUT',
+        body: JSON.stringify({
+          company: data.company,
+          contactPerson: data.contactPerson,
+          email: data.email,
+          phone: data.phone,
+          website: data.website,
+          industry: data.industry,
+          seoStats: {
+            ...currentClient.seoStats,
+            indexedKeywords: data.indexedKeywords,
+            seoClicks: data.seoClicks,
+            websiteQualityRating: data.websiteQualityRating,
+          },
+        }),
+      });
+      toast.success('Client updated successfully!');
+      if (clientId) {
+        fetchClientById(clientId);
+      }
+      setIsEditModalOpen(false);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Failed to update client');
+      throw error;
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="space-y-6">
@@ -73,7 +109,13 @@ export default function ClientDetailPage() {
             <span className="sr-only">Back</span>
           </Link>
         </Button>
-        <h2 className="text-3xl font-bold tracking-tight">{currentClient.company}</h2>
+        <div className="flex items-center gap-4">
+          <h2 className="text-3xl font-bold tracking-tight">{currentClient.company}</h2>
+          <Button variant="outline" size="sm" onClick={() => setIsEditModalOpen(true)}>
+            <Pencil className="mr-2 h-4 w-4" />
+            Edit Client
+          </Button>
+        </div>
       </div>
       <div className="grid gap-6 lg:grid-cols-3">
         <div className="lg:col-span-1 space-y-6">
@@ -84,6 +126,13 @@ export default function ClientDetailPage() {
           <ClientFilesCard client={currentClient} />
         </div>
       </div>
+
+      <ClientFormModal
+        open={isEditModalOpen}
+        onClose={() => setIsEditModalOpen(false)}
+        client={currentClient}
+        onSubmit={handleUpdateClient}
+      />
     </div>
   );
 }
